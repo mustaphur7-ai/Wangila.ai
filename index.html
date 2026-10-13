@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#090908"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Elite Bot B">
+<title>Elite Bot B (original rules)</title>
+<style>
+:root{--bg:#090908;--panel:#12110d;--line:#2a2412;--gold:#f5c518;--ok:#22d391;--bad:#ff4d4d;--tx:#f1ecdc;--mu:#8a846f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0 auto;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:0 14px 30px;max-width:480px}
+header{display:flex;align-items:center;gap:12px;padding:16px 0}header b{font-size:18px;color:var(--gold);letter-spacing:.5px;display:block;line-height:1.1}
+header small,.mu{color:var(--mu);font-size:12px}.ico{font-size:20px;color:var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.ch{display:flex;align-items:center;gap:8px;color:var(--gold);font-weight:700;margin-bottom:12px;font-size:15px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.big{font-size:22px;font-weight:800}
+label{display:block;font-size:12px;color:var(--mu);margin:10px 0 4px}
+input,select{width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:#080807;color:var(--tx);font-size:14px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+button{border:0;border-radius:9px;padding:12px;font-weight:800;font-size:13px;cursor:pointer;letter-spacing:.4px}
+.yel{width:100%;background:var(--gold);color:#1a1400;margin-top:14px}.out{background:none;border:1px solid var(--gold);color:var(--gold);padding:8px 12px}
+.rm{background:none;color:var(--bad);font-size:12px;padding:4px 8px;margin-left:auto}.row{display:flex;gap:10px}.row>*{flex:1}
+.live{color:var(--ok);font-size:11px;font-weight:800;letter-spacing:.6px}
+svg{width:100%;height:110px;background:#0a0a08;border:1px solid var(--line);border-radius:10px;display:block}
+.step{display:flex;align-items:center;gap:10px;background:#0b0a08;border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-top:8px;font-size:13px}
+.step i{color:var(--gold);font-style:normal}.step em{margin-left:auto;font-style:normal;color:var(--mu);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}.dot.off{background:#3b3624}
+.badge{font-size:11px;font-weight:800;padding:3px 10px;border-radius:99px;background:#3a1212;color:var(--bad)}.badge.w{background:#3a2e08;color:var(--gold)}.dot.no{background:var(--bad)}.badge.r{background:#0e3325;color:var(--ok)}
+.go{background:var(--ok);color:#04210f}.stop{background:var(--bad);color:#fff}.g{color:var(--ok)}.r{color:var(--bad)}
+table{width:100%;font-size:13px;border-collapse:collapse}td{padding:5px 2px;border-bottom:1px solid var(--line)}
+#log{font:12px/1.5 ui-monospace,Consolas,monospace;color:var(--mu);max-height:130px;overflow:auto;white-space:pre}summary{cursor:pointer;color:var(--gold);font-weight:700}
+#msg{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:13px;border:1px solid var(--line);background:#0b0a08;color:var(--tx);word-break:break-word}#msg.bad{border-color:var(--bad);color:#ffb3ad}#msg.ok{border-color:var(--ok);color:#9ff0cf}
+.vt{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line);font-size:12px}.vt b{font-size:11px}
+.note{border-color:var(--gold);font-size:12px;color:var(--mu)}
+</style></head><body>
+<header><span class="ico">☰</span><div><b>ELITE BOT</b><small>Smart Trading, Elite Results</small><small style="display:block;color:var(--gold);font-weight:700">VERSION B · original rules + auto-run (momentum, trend and position score, stop = 1.5 × ATR)</small></div><button id="install" class="out" type="button" style="margin-left:auto;display:none">Install app</button></header>
+
+<div class="card note" id="synth" style="display:none;border-color:var(--bad)"><b style="color:var(--bad)">Synthetic prices.</b> This preview trades made-up prices, so its profit, win rate and scores mean nothing and will look better than a real broker. For realistic testing use the Python backtester in <b>xau_sim</b> or a broker demo account.</div>
+<div class="card note" id="pv" style="display:none;border-color:var(--bad)"><b style="color:var(--bad)">You're inside Claude's preview.</b> The preview blocks every connection to other websites, so a broker cannot connect here. <b>Demo simulation</b> still works.<br><br><b style="color:var(--gold)">To connect your broker:</b> download <b>index.html</b> from the chat, then on your phone open Files → Downloads → index.html → <b>Open with Chrome</b>. (Or upload it to GitHub Pages to get a permanent link.)</div>
+<div class="card note"><b style="color:var(--gold)">How it connects.</b> Your phone talks straight to your broker through MetaApi (cloud MT5). Your broker password stays on MetaApi. Keep this page open and your screen on while the bot runs. Try <b>Demo simulation</b> first, then a broker <b>demo account</b>.</div>
+
+<div class="card"><div class="top"><div><div class="mu">Account Status</div><div class="big r" id="cs">DISCONNECTED</div><div class="mu" id="cd">Not connected to any account</div></div>
+<button class="out" id="topbtn">Connect</button></div></div>
+
+<div class="card" id="acct"><div class="ch">▤ ACCOUNT <button class="rm" id="rm" style="display:none">▢ Remove</button></div>
+<div id="form"><label for="broker">Broker name (label only, any MT5 broker)</label><input id="broker" list="bl" placeholder="Exness, IC Markets, XM..."><datalist id="bl"><option>Exness<option>IC Markets<option>XM<option>Pepperstone<option>FBS<option>OctaFX</datalist>
+<label for="tok">MetaApi token (use an account access token)</label><input id="tok" type="password" autocomplete="off">
+<label for="acc">MetaApi account ID</label><input id="acc" autocomplete="off">
+<div class="row"><div><label for="reg">Region</label><select id="reg"><option>new-york</option><option>london</option><option>singapore</option></select></div><div><label for="lsym">Gold symbol</label><input id="lsym" placeholder="XAUUSD or XAUUSDm"></div></div>
+<label style="display:flex;gap:8px;align-items:center"><input id="rem" type="checkbox" style="width:auto"> Remember on this phone (only on a phone you alone use)</label>
+<button class="yel" id="lconn" type="button">⛓ CONNECT BROKER</button>
+<div id="msg" role="status" aria-live="polite" style="display:none"></div>
+<label for="bal0" style="margin-top:16px">Interface preview with MADE-UP prices. Starting balance ($)</label><input id="bal0" type="number" value="100" min="10">
+<button class="out" style="width:100%;margin-top:8px" id="conn">Interface preview (synthetic prices)</button></div></div>
+
+<div class="card"><div class="ch"><span class="live">∿ LIVE ANALYSIS</span></div>
+<svg id="ch" viewBox="0 0 300 110" preserveAspectRatio="none" aria-label="Equity chart"></svg>
+<div class="step"><i>◔</i>Detecting market<em id="a1"></em><span class="dot" id="d1"></span></div>
+<div class="step"><i>◔</i>Calibrating stop loss<em id="a2"></em><span class="dot" id="d2"></span></div>
+<div class="step"><i>◔</i>Scoring signal<em id="a3"></em><span class="dot" id="d3"></span></div>
+<p class="mu" style="text-align:center;margin:10px 0 0" id="mon"></p></div>
+
+<div class="card"><div class="ch">▣ BOT CONTROL</div>
+<div class="top"><b>Bot Status</b><span class="badge" id="bs">STOPPED</span></div><p class="mu" id="hint">Start a demo account to start the bot.</p>
+<div class="row"><button class="go" id="start">▷ START BOT</button><button class="stop" id="stop">▢ STOP BOT</button></div></div>
+
+<div class="card"><details><summary>Risk limits</summary>
+<div class="row"><div><label for="lot">Lot per entry (0.01 to 100)</label><input id="lot"></div><div><label for="max">Max open trades (1 to 100)</label><input id="max"></div></div>
+<div class="row"><div><label for="sl">Max stop loss (pts)</label><input id="sl"></div><div><label for="tp">Take profit (× stop loss)</label><input id="tp"></div></div>
+<div class="row"><div><label for="dl">Daily loss stop ($)</label><input id="dl"></div><div><label for="cd2">Cooldown (s)</label><input id="cd2"></div></div>
+<div class="row"><div><label for="score">Min score to trade (0-100; pauses below it)</label><input id="score"></div><div><label for="step">Scale-in step (× ATR)</label><input id="step"></div></div>
+<label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input id="auto" type="checkbox" checked style="width:auto"> Auto-run: switch to RUNNING by itself when all three checks are green</label>
+<div class="row"><div><label for="tick">Check the market every (seconds, 0.5 to 10)</label><input id="tick"></div><div></div></div>
+<button class="yel" id="save">Save limits</button></details></div>
+
+<div class="card"><details><summary id="vsum">▥ Checklist details</summary><div id="votes" style="margin-top:8px"></div><p class="mu">Rules-based checklist, not a machine-learning model. Start arms the bot. It switches to RUNNING only while all three are green, and stops itself if the score then falls below the minimum, then adds one entry per scale-in step in the direction of profit (never averages down).</p></details></div>
+<div class="card"><div class="ch">Open positions</div><div class="mu">Balance <b id="bal">-</b> &nbsp; Equity <b id="eq">-</b></div><table id="pos"></table></div>
+<div class="card"><div class="ch">▦ BACKTEST: real gold prices from your broker</div>
+<div class="row"><div><label for="btd">Days to test (1 to 30)</label><input id="btd" value="5"></div><div><label for="btcost">Cost per trade (pts)</label><input id="btcost" value="25"></div></div>
+<div class="row" style="margin-top:10px"><button class="out" id="btrun" type="button">Test my settings</button><button class="out" id="btgrid" type="button">Compare settings</button></div>
+<p class="mu" id="btmsg">Connect your broker first. The test replays this bot's rules on its real 5-minute candles.</p>
+<div id="btout" style="overflow-x:auto"></div></div>
+<div class="card"><div class="ch">Log</div><div id="log"></div></div>
+
+<script>
+const $=i=>document.getElementById(i);
+const C={lot:.01,max:3,sl:600,rr:.5,dl:5,cd:0,score:70,step:1,modStep:50,tick:1,auto:true};
+const ids={lot:'lot',max:'max',sl:'sl',rr:'tp',dl:'dl',cd:'cd2',score:'score',step:'step',tick:'tick'};
+const S={on:false,run:false,bal:0,pos:[],px:2650,prices:[],hist:[],log:[],halted:'',dayStart:0,last:0,sig:{},manualOff:false,cand:[],an:null,cur:null,drift:0,tk:0,clk:0};
+const PT=0.01, SPEED=20; // 1 point = $0.01; simulation runs 20x faster than the live cooldown
+function put(){for(const k in ids)$(ids[k]).value=C[k];$('auto').checked=C.auto}put();
+function lg(m){S.log=[new Date().toLocaleTimeString()+'  '+m,...S.log].slice(0,60)}
+function ema(v,n){const k=2/(n+1);let e=v[0];for(let i=1;i<v.length;i++)e=v[i]*k+e*(1-k);return e}
+const pl=p=>((p.t=='sell'?p.o-S.px:S.px-p.o)*100*p.lot);
+// ===== CHECKLIST ENGINE: Detecting market -> Calibrating stop loss -> Scoring signal. All three green = trade. =====
+const analyze=(()=>{
+const nz=(a,k=1)=>a[a.length-k];
+const sma=(a,n)=>a.map((_,i)=>{if(i<n-1)return NaN;let s=0;for(let j=i-n+1;j<=i;j++)s+=a[j];return s/n});
+const ema=(a,n)=>{const k=2/(n+1);let e=NaN;return a.map(x=>{if(isNaN(x))return NaN;e=isNaN(e)?x:x*k+e*(1-k);return e})};
+const rma=(a,n)=>{const k=1/n;let e=NaN;return a.map(x=>{if(isNaN(x))return NaN;e=isNaN(e)?x:x*k+e*(1-k);return e})};
+const tr=(h,l,c)=>h.map((x,i)=>i?Math.max(x-l[i],Math.abs(x-c[i-1]),Math.abs(l[i]-c[i-1])):x-l[i]);
+const atr=(h,l,c,n)=>rma(tr(h,l,c),n);
+const rsi=(a,n)=>{const g=a.map((x,i)=>i?Math.max(x-a[i-1],0):0),d=a.map((x,i)=>i?Math.max(a[i-1]-x,0):0),ag=rma(g,n),al=rma(d,n);return ag.map((x,i)=>al[i]===0?100:100-100/(1+x/al[i]))};
+const dmi=(h,l,c,n)=>{const P=[],M=[];h.forEach((x,i)=>{if(!i){P.push(0);M.push(0);return}const u=x-h[i-1],d=l[i-1]-l[i];P.push(u>d&&u>0?u:0);M.push(d>u&&d>0?d:0)});const a=atr(h,l,c,n),p=rma(P,n).map((x,i)=>100*x/a[i]),m=rma(M,n).map((x,i)=>100*x/a[i]),dx=p.map((x,i)=>100*Math.abs(x-m[i])/((x+m[i])||1));return{adx:rma(dx,n)}};
+const day=t=>Math.floor(t/864e5);
+const dayStart=t=>{let i=t.length-1;while(i>0&&day(t[i-1])===day(t[i]))i--;return i};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+return function(cs){
+  if(!cs||cs.length<80)return null;
+  const h=cs.map(x=>x.h),l=cs.map(x=>x.l),c=cs.map(x=>x.c),v=cs.map(x=>x.v||1),t=cs.map(x=>x.t),n=c.length-1,px=c[n];
+  // 1) DETECTING MARKET: trend direction + trend strength + volatility state
+  const at=atr(h,l,c,14),a=at[n],volR=a/sma(at,50)[n],e20=ema(c,20),e50=ema(c,50),e5=ema(c,5),e13=ema(c,13),adx=dmi(h,l,c,14).adx[n];
+  const dir=px>e20[n]&&e20[n]>e50[n]?1:px<e20[n]&&e20[n]<e50[n]?-1:0,s=dir||(e20[n]>=e50[n]?1:-1);
+  const ok1=dir!==0&&adx>=20&&volR>=.6&&volR<=2.2;
+  // 2) CALIBRATING STOP LOSS: stop = 1.5 x live ATR, must sit inside the allowed range
+  const slPts=Math.round(1.5*a/PT),tpPts=Math.round(slPts*C.rr),ok2=slPts>=50&&slPts<=C.sl;
+  // 3) SCORING SIGNAL: momentum + trend strength + price location, 0-100
+  const r=nz(rsi(c,14)),roc=(px-c[n-10])/c[n-10];
+  const mom=clamp(s*(r-50)/20,0,1)*20+(Math.sign(roc)===s?15:0);
+  const trend=clamp((adx-15)/20,0,1)*25+(Math.sign(e20[n]-e20[n-5])===s?10:0);
+  let i0=dayStart(t);if(n+1-i0<6)i0=n-47;let q=0,w=0;for(let i=i0;i<=n;i++){q+=(h[i]+l[i]+c[i])/3*v[i];w+=v[i]}
+  const loc=(s*(px-q/w)>0?15:0)+(s*(e5[n]-e13[n])>0?15:0),score=Math.round(mom+trend+loc),ok3=score>=C.score,all=ok1&&ok2&&ok3;
+  return{atr:a,slPts,tpPts,score,dir,ok:[ok1,ok2,ok3],all,side:all?(dir>0?'buy':'sell'):null,rows:[
+    ['Detecting market',ok1,`${dir>0?'bullish':dir<0?'bearish':'no clear direction'} · trend strength ADX ${adx.toFixed(0)} (needs 20+) · volatility ${volR.toFixed(2)}x normal (needs 0.6–2.2x)`,`${dir>0?'bullish':dir<0?'bearish':'unclear'} · ADX ${adx.toFixed(0)}`],
+    ['Calibrating stop loss',ok2,`live ATR ${a.toFixed(2)} → stop ${slPts} pts ($${(slPts*PT).toFixed(2)}), take profit ${tpPts} pts (${C.rr}× the stop). Allowed stop: 50–${C.sl} pts`,`stop ${slPts} pts`],
+    ['Scoring signal',ok3,`score ${score}/100 (needs ${C.score}) = momentum ${Math.round(mom)}/35 + trend strength ${Math.round(trend)}/35 + price location ${loc}/30`,`score ${score}/${C.score}`]]}};
+})();
+
+const TPC=10,BAR=3e5;
+function gauss(){return Math.random()+Math.random()+Math.random()-1.5}
+function seedDemo(){let p=2650,t=Date.UTC(2026,9,10,14,0)-400*BAR,d=0;const out=[];
+  for(let i=0;i<400;i++){d=Math.max(-.45,Math.min(.45,d*.92+gauss()*.12));const o=p;let h=o,l=o,v=0;
+    for(let k=0;k<TPC;k++){p+=d+gauss()*.5;h=Math.max(h,p);l=Math.min(l,p);v+=3+Math.random()*8}
+    out.push({t,o,h,l,c:p,v:Math.round(v)});t+=BAR}
+  S.cand=out;S.px=p;S.drift=d;S.clk=t;S.cur=null;S.tk=0;S.an=analyze(S.cand)}
+function step(){
+  if(!S.on||S.live)return;
+  S.px+=S.drift+gauss()*.5;
+  const q=S.cur||(S.cur={t:S.clk,o:S.px,h:S.px,l:S.px,c:S.px,v:0});
+  q.h=Math.max(q.h,S.px);q.l=Math.min(q.l,S.px);q.c=S.px;q.v+=3+Math.random()*8;
+  if(++S.tk>=TPC){S.cand=[...S.cand,{...q,v:Math.round(q.v)}].slice(-400);S.cur=null;S.tk=0;S.clk+=BAR;
+    S.drift=Math.max(-.45,Math.min(.45,S.drift*.92+gauss()*.12));S.an=analyze(S.cand)}
+  S.an=analyze(S.cur?[...S.cand,S.cur]:S.cand);
+  for(const p of S.pos.slice()){const hit=p.t=='sell'?(S.px>=p.sl||S.px<=p.tp):(S.px<=p.sl||S.px>=p.tp);
+    if(hit){const d=p.t=='sell'?p.o-S.px:S.px-p.o;S.bal+=d*100*p.lot;S.pos.splice(S.pos.indexOf(p),1);lg(`closed ${p.t} ${(d*100*p.lot).toFixed(2)}`)}}
+  const at=S.run&&S.an&&S.an.ok[2]?S.an.atr:0;
+  if(at)for(const p of S.pos){const d=p.t=='sell'?p.o-S.px:S.px-p.o;if(d>=at){const w=p.t=='sell'?S.px+at:S.px-at;if(Math.abs(w-p.sl)>=Math.max(.25*at,C.modStep*PT)&&(p.t=='sell'?w<p.sl:w>p.sl)){p.sl=w;lg(`stop moved to ${w.toFixed(2)}`)}}}
+  const eq=S.bal+S.pos.reduce((a,p)=>a+pl(p),0);
+  if(!S.halted&&eq<=S.dayStart-C.dl){S.halted=`Daily loss limit ($${C.dl}) hit`;S.run=false;lg(S.halted)}
+  autoRun();watchScore();const side=S.an&&S.an.side,now=Date.now()/1000;
+  if(side&&canScale(side)&&now-S.last>=C.cd/SPEED){S.last=now;const sp=S.an.slPts*PT;
+    S.pos.push({t:side,lot:C.lot,o:S.px,sl:side=='buy'?S.px-sp:S.px+sp,tp:side=='buy'?S.px+sp*C.rr:S.px-sp*C.rr});
+    lg(`opened ${side} ${C.lot} · stop ${S.an.slPts} pts · score ${S.an.score} · entry ${S.pos.length}/${C.max}`)}
+  draw(eq)}
+function renderVotes(){const an=S.an;
+  if(!an){$('vsum').textContent='▥ Checklist: collecting candles…';$('votes').innerHTML='';return}
+  $('vsum').textContent=`▥ Checklist: ${an.ok.filter(Boolean).length}/3 green`;
+  $('votes').innerHTML=an.rows.map(([n,ok,d])=>`<div class="vt" style="display:block"><b class="${ok?'g':'r'}">${ok?'● GREEN':'○ red'}</b> &nbsp;${n}<br><span class="mu">${d}</span></div>`).join('')}
+function canScale(side){const an=S.an;if(!S.run||!an||!an.all||an.side!==side||S.pos.length>=C.max)return false;
+  if(!S.pos.length)return true;if(S.pos.some(p=>p.t!==side))return false;
+  const os=S.pos.map(p=>p.o);return side=='buy'?S.px-Math.max(...os)>=C.step*an.atr:Math.min(...os)-S.px>=C.step*an.atr}
+async function trailLive(){const an=S.an;if(!an)return;const jobs=[];
+  for(const p of S.pos){if(!p.id||p.cur==null)continue;const buy=p.t=='buy',d=buy?p.cur-p.o:p.o-p.cur;if(d<an.atr)continue;
+    const w=+(buy?p.cur-an.atr:p.cur+an.atr).toFixed(2);if(p.sl!=null&&(buy?w<=p.sl+.25*an.atr:w>=p.sl-.25*an.atr))continue;
+    if(p.sl!=null&&Math.abs(w-p.sl)<Math.max(.25*an.atr,C.modStep*PT))continue;
+    const mem=S.lm||(S.lm={}),m0=mem[p.id];if(m0&&Math.abs(m0.w-w)<.25*an.atr&&Date.now()-m0.t<8000)continue;
+    jobs.push((async()=>{try{const r=await api('POST','/trade',{actionType:'POSITION_MODIFY',positionId:p.id,stopLoss:w,...(p.tp?{takeProfit:p.tp}:{})});
+      if(['TRADE_RETCODE_DONE','ERR_NO_ERROR'].includes(r.stringCode)){p.sl=w;mem[p.id]={w,t:Date.now()};lg(`stop moved to ${w}`)}else lg('stop move failed: '+(r.message||r.stringCode))}catch(e){lg('stop move error: '+e.message)}})())}
+  await Promise.all(jobs)}
+function autoRun(){
+  if(!C.auto||!S.on||S.run||S.manualOff||S.halted||!S.an||!S.an.all)return;
+  S.run=true;lg('All three checks are green: the bot switched itself to RUNNING.');
+  if(S.live)try{navigator.wakeLock.request('screen').then(w=>{WL=w}).catch(()=>{})}catch(e){}}
+function watchScore(){const an=S.an;
+  if(!S.run){S.was=false;S.pz=false;return}
+  if(an&&an.all)S.was=true;
+  const pz=!!(S.was&&an&&!an.ok[2]);
+  if(pz&&!S.pz)lg(`STOPPED TRADING: score fell to ${an.score} (minimum ${C.score}). No new trades and no stop changes on open trades until it recovers. Their stop loss and take profit stay active at the broker.`);
+  else if(!pz&&S.pz&&an)lg(`TRADING AGAIN: score back to ${an.score}. Open trades are managed again. `+(an.all?'New trades can open now.':'Waiting for the other checks to be green.'));
+  S.pz=pz}
+function draw(eq){
+  const g=S.sig;$('cs').textContent='CONNECTED';$('cs').className='big g';$('cd').textContent='Connected to '+(S.name||'demo account');
+  watchScore();const an=S.an,st=!S.run?'STOPPED':an&&an.all?'RUNNING':S.pz?'PAUSED':'WAITING';
+  $('bs').textContent=st;$('bs').className='badge'+(st=='RUNNING'?' r':st=='WAITING'||st=='PAUSED'?' w':'');
+  $('hint').textContent=S.halted||(st=='PAUSED'?`Stopped trading: score ${an.score} is below ${C.score}. It starts again by itself as soon as the score is back. Open trades are paused too (no stop changes); their stop loss and take profit stay active at the broker.`:st=='WAITING'?'Armed. Waiting for all three checks to turn green.':st=='RUNNING'?'All three checks green. Scaling in with stops on every entry.':(S.on&&C.auto&&!S.manualOff&&!S.halted&&!S.run?'Auto-run is on: the bot switches itself to RUNNING as soon as all three checks are green.':S.pos.length?'Bot stopped. Open trades are paused (no stop changes). Their stop loss and take profit stay active at the broker.':''));
+  $('synth').style.display=S.on&&!S.live?'block':'none';$('bal').textContent=S.bal.toFixed(2);$('eq').textContent=eq.toFixed(2);
+  [1,2,3].forEach(k=>{$('a'+k).textContent=an?an.rows[k-1][3]:'collecting candles…';$('d'+k).className='dot'+(an?(an.ok[k-1]?'':' no'):' off')});
+  $('mon').textContent=st=='RUNNING'?'Elite Bot is monitoring and scaling your '+(S.live?'live':'demo')+' account':st=='PAUSED'?'Elite Bot is not trading until the score recovers':st=='WAITING'?'Elite Bot is waiting for a clean setup':'Bot is idle';
+  S.hist=[...S.hist,eq].slice(-100);const a=Math.min(...S.hist),b=Math.max(...S.hist),sp=(b-a)||1,
+  pts=S.hist.map((v,i)=>(i*3)+','+(100-(v-a)/sp*85)).join(' ');
+  $('ch').innerHTML=`<polygon fill="rgba(245,197,24,.18)" points="0,110 ${pts} ${(S.hist.length-1)*3},110"/><polyline fill="none" stroke="#f5c518" stroke-width="2" points="${pts}"/>`;
+  $('pos').innerHTML=S.pos.map(p=>{const x=p.pr!==undefined?p.pr:pl(p);return `<tr><td class="${p.t=='buy'?'g':'r'}">${p.t} ${p.lot}</td><td>${p.o.toFixed(2)}</td><td>${(p.cur??S.px).toFixed(2)}</td><td class="${x>=0?'g':'r'}">${x.toFixed(2)}</td></tr>`}).join('')||'<tr><td class="mu">None</td></tr>';
+  $('log').textContent=S.log.join('\n');renderVotes()}
+function setConn(on){S.on=on;$('form').style.display=on?'none':'block';$('rm').style.display=on?'':'none';
+  [1,2,3].forEach(i=>$('d'+i).className='dot off');
+  if(!on){S.run=false;S.manualOff=false;S.live=false;$('cs').textContent='DISCONNECTED';$('cs').className='big r';$('cd').textContent='Not connected to any account';$('bs').textContent='STOPPED';$('bs').className='badge';$('hint').textContent='Start a demo account to start the bot.'}}
+$('conn').onclick=()=>{say('');const b=Math.max(10,+$('bal0').value||100);Object.assign(S,{bal:b,pos:[],px:2650,prices:[],hist:[],halted:'',dayStart:b,sig:{},live:false,name:''});seedDemo();setConn(true);lg('demo account started');draw(b)};
+$('rm').onclick=()=>{setConn(false);try{localStorage.removeItem('eb')}catch(e){}$('tok').value='';lg('account removed')};
+$('topbtn').onclick=()=>$('acct').scrollIntoView({behavior:'smooth'});
+$('start').onclick=async()=>{if(S.on&&!S.halted){S.manualOff=false;S.run=true;lg('bot armed: it runs once all three checks are green');try{if(S.live)WL=await navigator.wakeLock.request('screen')}catch(e){}}};
+$('stop').onclick=()=>{S.manualOff=true;S.run=false;lg('bot stopped: no new trades and no stop changes on open trades. Their stop loss and take profit stay active at the broker.');try{WL&&WL.release()}catch(e){}};
+$('save').onclick=()=>{C.auto=$('auto').checked;for(const k in ids){const v=$(ids[k]).value.trim();if(v!==''&&!isNaN(+v)&&(+v>0||k==='cd'))C[k]=+v}C.max=Math.round(Math.min(100,Math.max(1,C.max)));C.lot=Math.round(Math.min(100,Math.max(.01,C.lot))*100)/100;C.score=Math.min(100,Math.max(0,C.score));C.step=Math.max(.2,C.step);C.tick=Math.min(10,Math.max(.5,C.tick));C.rr=Math.max(.1,C.rr);if(S.cand.length)S.an=analyze(S.cand);put();lg('limits saved')};
+
+let WL=null;const L={tok:'',acc:'',reg:'new-york',sym:'XAUUSD',busy:false,ct:0};
+async function api(method,path,body,market){
+  const host=`https://mt-${market?'market-data-':''}client-api-v1.${L.reg}.agiliumtrade.ai`;
+  const h={'auth-token':L.tok};if(body)h['Content-Type']='application/json';
+  const r=await fetch(`${host}/users/current/accounts/${L.acc}${path}`,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+async function place(side,q0){
+  const q=q0&&q0.bid?q0:await api('GET',`/symbols/${L.sym}/current-price`),buy=side=='buy',px=buy?q.ask:q.bid;
+  const r=await api('POST','/trade',{actionType:buy?'ORDER_TYPE_BUY':'ORDER_TYPE_SELL',symbol:L.sym,volume:C.lot,
+    stopLoss:+(buy?px-S.an.slPts*PT:px+S.an.slPts*PT).toFixed(2),takeProfit:+(buy?px+S.an.slPts*C.rr*PT:px-S.an.slPts*C.rr*PT).toFixed(2)});
+  if(['TRADE_RETCODE_DONE','ERR_NO_ERROR','TRADE_RETCODE_PLACED'].includes(r.stringCode))return true;
+  lg('order failed: '+(r.message||r.stringCode));return false}
+async function liveTick(){
+  if(!S.on||!S.live||L.busy)return;L.busy=true;let eq=S.bal;
+  try{
+    const wantC=Date.now()-L.ct>10000;
+    const [a,ps,q,cs]=await Promise.all([
+      api('GET','/account-information'),
+      api('GET','/positions'),
+      api('GET',`/symbols/${L.sym}/current-price`).catch(()=>null),
+      wantC?api('GET',`/historical-market-data/symbols/${L.sym}/timeframes/5m/candles?limit=400`,null,true):null]);
+    S.bal=a.balance;eq=a.equity;
+    S.pos=ps.filter(p=>p.symbol==L.sym).map(p=>({t:p.type.includes('BUY')?'buy':'sell',lot:p.volume,o:p.openPrice,cur:p.currentPrice??p.openPrice,pr:p.profit||0,id:p.id,sl:p.stopLoss,tp:p.takeProfit}));
+    if(cs){S.cand=cs.map(x=>({t:Date.parse(x.time),o:x.open,h:x.high,l:x.low,c:x.close,v:x.tickVolume??x.volume??1})).sort((x,y)=>x.t-y.t);L.ct=Date.now()}
+    if(q&&q.bid&&S.cand.length){const l=S.cand[S.cand.length-1];l.c=q.bid;if(q.bid>l.h)l.h=q.bid;if(q.bid<l.l)l.l=q.bid}
+    S.px=q&&q.bid?q.bid:(S.pos.length?S.pos[0].cur:(S.cand.length?S.cand[S.cand.length-1].c:S.px));
+    S.an=analyze(S.cand);if(!S.an&&cs)lg(`only ${S.cand.length} candles received, need 50`);
+    if(!S.halted&&eq<=S.dayStart-C.dl){S.halted=`Daily loss limit ($${C.dl}) hit`;S.run=false;lg(S.halted)}
+    if(S.run&&S.an&&S.an.ok[2])await trailLive();
+    autoRun();watchScore();const side=S.an&&S.an.side,waiting=S.sent&&Date.now()-S.sent<5000&&S.pos.length<=S.sentN;
+    if(side&&!waiting&&canScale(side)&&Date.now()/1000-S.last>=C.cd){S.last=Date.now()/1000;
+      if(await place(side,q)){S.sent=Date.now();S.sentN=S.pos.length;lg(`opened ${side} ${C.lot} · stop ${S.an.slPts} pts · score ${S.an.score} · entry ${S.pos.length+1}/${C.max}`)}}
+  }catch(e){
+    if(/HTTP 429/.test(e.message)){L.slow=Date.now()+30000;lg('MetaApi asked us to slow down. Checking every 5 seconds for the next 30 seconds.')}
+    else lg('error: '+e.message+(e.message.startsWith('HTTP 4')?' (check token, account ID, region, symbol)':''))}
+  finally{L.busy=false;draw(eq)}}
+const IN_CLAUDE=/(^|\.)(claude\.(ai|com)|claudeusercontent\.com)$/.test(location.hostname)||location.protocol==='about:'||location.origin==='null'&&top!==self;
+if(IN_CLAUDE)$('pv').style.display='block';
+function say(m,k){const e=$('msg');e.style.display=m?'block':'none';e.className=k||'';e.textContent=m||''}
+function why(e){const m=String(e&&e.message||e);
+  if(/HTTP 401|HTTP 403/.test(m))return 'MetaApi rejected the token. Copy a fresh account access token from app.metaapi.cloud and paste it again.';
+  if(/HTTP 404/.test(m))return 'MetaApi could not find that account. Check the account ID and the region, and make sure the account is deployed (started) in MetaApi.';
+  if(/HTTP 429/.test(m))return 'MetaApi says too many requests. Wait a minute and try again.';
+  if(/HTTP 5/.test(m))return 'MetaApi had a server problem ('+m+'). Try again in a minute.';
+  return 'Could not reach MetaApi ('+m+'). Check your internet connection. If it still fails, MetaApi may be refusing requests from this page (CORS): copy this message and send it back so it can be fixed.'}
+$('lconn').onclick=async()=>{
+  const b=$('lconn');
+  if(IN_CLAUDE){say('Blocked: you are inside Claude\'s preview, which cannot reach MetaApi. Download index.html from the chat and open it in Chrome (Files → Downloads → index.html → Open with Chrome).','bad');return}
+  L.tok=$('tok').value.trim();L.acc=$('acc').value.trim();L.reg=$('reg').value;L.sym=$('lsym').value.trim()||'XAUUSD';
+  if(!L.tok||!L.acc){say('Enter your MetaApi token and your account ID first.','bad');return}
+  b.disabled=true;b.textContent='CONNECTING…';say('Contacting MetaApi…');
+  try{const a=await api('GET','/account-information');
+    Object.assign(S,{bal:a.balance,pos:[],prices:[],hist:[],halted:'',dayStart:a.equity,sig:{},cand:[],an:null,cur:null,live:true,name:`${$('broker').value||a.broker||'broker'} ${a.login||''}`.trim()});
+    L.ct=0;setConn(true);say('');lg(`broker connected, symbol ${L.sym}`+(a.tradeMode==='ACCOUNT_TRADE_MODE_REAL'?' (REAL account - be careful)':''));
+    try{if($('rem').checked)localStorage.setItem('eb',JSON.stringify({tok:L.tok,acc:L.acc,reg:L.reg,sym:L.sym,b:$('broker').value}));else localStorage.removeItem('eb')}catch(e){}
+    $('tok').value='';draw(a.equity)
+  }catch(e){say(why(e),'bad')}
+  finally{b.disabled=false;b.textContent='⛓ CONNECT BROKER'}};
+try{const s=JSON.parse(localStorage.getItem('eb')||'null');if(s){$('tok').value=s.tok;$('acc').value=s.acc;$('reg').value=s.reg;$('lsym').value=s.sym;$('broker').value=s.b||'';$('rem').checked=true}}catch(e){}
+function simulate(cs,A,o){
+  const trades=[];let open=[];
+  const done=(tr,px)=>trades.push({pts:(tr.side==='buy'?px-tr.e:tr.e-px)/PT-o.cost});
+  for(let i=0;i<cs.length;i++){
+    const c=cs[i],a=A[i];
+    open=open.filter(tr=>{
+      const hitSL=tr.side==='buy'?c.l<=tr.sl:c.h>=tr.sl,hitTP=tr.side==='buy'?c.h>=tr.tp:c.l<=tr.tp;
+      if(hitSL){done(tr,tr.sl);return false}   // if one candle touches both, count the stop (the pessimistic choice)
+      if(hitTP){done(tr,tr.tp);return false}
+      return true});
+    if(!a)continue;
+    if(a.score>=o.score)for(const tr of open){const buy=tr.side==='buy',d=buy?c.c-tr.e:tr.e-c.c;
+      if(d>=a.atr){const w=buy?c.c-a.atr:c.c+a.atr,gap=Math.max(.25*a.atr,C.modStep*PT);if(buy?w>tr.sl+gap:w<tr.sl-gap)tr.sl=w}}
+    if(a.ok1&&a.ok2&&a.dir!==0&&a.score>=o.score&&open.length<o.max){
+      const side=a.dir>0?'buy':'sell',es=open.map(t=>t.e);
+      const ok=!open.length||(open.every(t=>t.side===side)&&(side==='buy'?c.c-Math.max(...es)>=o.step*a.atr:Math.min(...es)-c.c>=o.step*a.atr));
+      if(ok){const sp=a.slPts*PT;open.push({side,e:c.c,sl:side==='buy'?c.c-sp:c.c+sp,tp:side==='buy'?c.c+sp*o.rr:c.c-sp*o.rr})}}}
+  open.forEach(tr=>done(tr,cs[cs.length-1].c));
+  const w=trades.filter(t=>t.pts>0),l=trades.filter(t=>t.pts<=0),sw=w.reduce((s,t)=>s+t.pts,0),sl=-l.reduce((s,t)=>s+t.pts,0);
+  let cum=0,pk=0,dd=0,st=0,ms=0;for(const t of trades){cum+=t.pts;pk=Math.max(pk,cum);dd=Math.max(dd,pk-cum);if(t.pts>0)st=0;else{st++;ms=Math.max(ms,st)}}
+  return{n:trades.length,wins:w.length,rate:trades.length?w.length/trades.length*100:0,net:cum,pf:sl?sw/sl:(sw?Infinity:0),dd,streak:ms,avgW:w.length?sw/w.length:0,avgL:l.length?-sl/l.length:0}}
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const BT={key:'',cs:null,A:null};
+function btNum(id,lo,hi,def){const v=+$(id).value;return isFinite(v)&&$(id).value.trim()!==''?Math.min(hi,Math.max(lo,v)):def}
+async function btLoad(days){
+  const key=[L.acc,L.sym,days,C.sl].join('|');if(BT.key===key&&BT.A)return;
+  const need=Math.round(days*288)+400;let all=[],start=null,pages=0;
+  while(all.length<need&&pages<12){
+    $('btmsg').textContent=`Downloading real candles… ${all.length} of about ${need}`;
+    const cs=await api('GET',`/historical-market-data/symbols/${L.sym}/timeframes/5m/candles?limit=1000`+(start?`&startTime=${encodeURIComponent(new Date(start).toISOString())}`:''),null,true);
+    pages++;const arr=(cs||[]).map(x=>({t:Date.parse(x.time),o:x.open,h:x.high,l:x.low,c:x.close,v:x.tickVolume??x.volume??1})).filter(x=>isFinite(x.t));
+    if(!arr.length)break;const seen=new Set(all.map(x=>x.t)),before=all.length;arr.forEach(x=>{if(!seen.has(x.t))all.push(x)});
+    if(all.length===before)break;start=Math.min(...arr.map(x=>x.t))-1;await sleep(300)}
+  all.sort((a,b)=>a.t-b.t);
+  if(all.length<500)throw Object.assign(new Error(`Only ${all.length} candles came back for ${L.sym}. Check the gold symbol and that the market has history.`),{plain:true});
+  const A=new Array(all.length).fill(null);
+  for(let i=79;i<all.length;i++){
+    if(i%60===0){$('btmsg').textContent=`Replaying the bot's rules… ${Math.round(i/all.length*100)}%`;await new Promise(r=>setTimeout(r))}
+    const an=analyze(all.slice(Math.max(0,i-399),i+1));if(an)A[i]={atr:an.atr,slPts:an.slPts,dir:an.dir,ok1:an.ok[0],ok2:an.ok[1],score:an.score}}
+  BT.key=key;BT.cs=all;BT.A=A}
+function btFirst(){return 400}   // the first 400 candles are only warm-up for the indicators
+function btRun(o){const i0=btFirst();return simulate(BT.cs.slice(i0),BT.A.slice(i0),o)}
+function btRow(label,r,extra){const f=x=>isFinite(x)?x.toFixed(2):'∞';
+  return `<tr ${extra||''}><td>${label}</td><td>${r.n}</td><td><b>${r.rate.toFixed(0)}%</b></td><td class="${r.net>=0?'g':'r'}">${Math.round(r.net)}</td><td>${f(r.pf)}</td><td>${Math.round(r.dd)}</td><td>${r.streak}</td></tr>`}
+const BTH='<tr><td></td><td>Trades</td><td>Win rate</td><td>Net pts</td><td>Profit factor</td><td>Worst drop</td><td>Worst losing run</td></tr>';
+async function btGo(grid){
+  const b1=$('btrun'),b2=$('btgrid');
+  if(IN_CLAUDE){$('btmsg').textContent='Blocked: this is Claude\'s preview, which cannot reach MetaApi. Open the downloaded index.html in Chrome.';return}
+  if(!S.live||!L.acc){$('btmsg').textContent='Connect your broker first. The test uses its real candles.';return}
+  b1.disabled=b2.disabled=true;$('btout').innerHTML='';
+  try{
+    const days=Math.round(btNum('btd',1,30,5)),cost=btNum('btcost',0,1000,25);await btLoad(days);
+    const cs=BT.cs.slice(btFirst()),d=(cs.at(-1).t-cs[0].t)/864e5,fmt=x=>new Date(x).toISOString().slice(0,16).replace('T',' ');
+    const mine={score:C.score,rr:C.rr,step:C.step,max:C.max,cost},rows=[];
+    const me=btRun(mine);rows.push(btRow(`<b>My settings</b><br><span class="mu">score ${C.score}, TP ${C.rr}x</span>`,me,'style="background:#1b180d"'));
+    let notes='';
+    if(grid){let best=null,bestNet=null;const list=[];
+      for(const sc of [60,70,80,90])for(const rr of [.5,1,1.5]){const r=btRun({...mine,score:sc,rr});list.push({sc,rr,r})}
+      best=list.reduce((a,x)=>x.r.n>=10&&(!a||x.r.rate>a.r.rate)?x:a,null);bestNet=list.reduce((a,x)=>x.r.n>=10&&(!a||x.r.net>a.r.net)?x:a,null);
+      list.forEach(x=>{const tag=(best&&x===best?' ★ best win rate':'')+(bestNet&&x===bestNet?' ◆ best net':'');
+        rows.push(btRow(`score ${x.sc}, TP ${x.rr}x${tag}`,x.r,`data-sc="${x.sc}" data-rr="${x.rr}" style="cursor:pointer"`))});
+      notes='Tap a row to use its score and take profit. ★ is the highest win rate and ◆ the highest net result among rows with at least 10 trades. They are often different rows.'}
+    $('btout').innerHTML='<table>'+BTH+rows.join('')+'</table>';
+    $('btout').querySelectorAll('tr[data-sc]').forEach(tr=>tr.onclick=()=>{C.score=+tr.dataset.sc;C.rr=+tr.dataset.rr;put();lg(`Applied from the backtest: minimum score ${C.score}, take profit ${C.rr}x the stop.`);$('btmsg').textContent=`Applied: minimum score ${C.score}, take profit ${C.rr}x. Tap Save limits only if you change something else.`});
+    $('btmsg').innerHTML=`Tested ${cs.length} real candles (${d.toFixed(1)} days, ${fmt(cs[0].t)} to ${fmt(cs.at(-1).t)}) on ${L.sym}. ${notes}<br>`+
+      (me.n<30?'<b class="r">Fewer than 30 trades: too few to trust. Test more days.</b><br>':'')+
+      '<span class="mu">Win rate is not profit: check Net pts and Profit factor (above 1 means winners outweigh losers). Past results do not predict the future. A candle that touches both stop and target counts as a loss. Trades fill exactly at the stop or target, with no slippage or price gaps. Cost per trade is a guess for the spread; use your broker\'s real spread. Lot size and the daily loss stop are not included.</span>'
+  }catch(e){$('btmsg').textContent=e&&e.plain?e.message:why(e)}
+  finally{b1.disabled=b2.disabled=false}}
+$('btrun').onclick=()=>btGo(false);$('btgrid').onclick=()=>btGo(true);
+(function loop(){const t0=Date.now();liveTick().finally(()=>setTimeout(loop,Math.max(0,((L.slow||0)>Date.now()?5000:C.tick*1000)-(Date.now()-t0))))})();
+setInterval(step,500);
+
+let DEF=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEF=e;$('install').style.display='block'});
+$('install').onclick=async()=>{if(!DEF)return;DEF.prompt();try{await DEF.userChoice}catch(e){}DEF=null;$('install').style.display='none'};
+window.addEventListener('appinstalled',()=>{$('install').style.display='none'});
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
